@@ -1,5 +1,5 @@
 @echo off
-title Incheon Science Festival - AI Art
+title Buma Invention Education Center - AI Art
 cd /d "%~dp0"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\serve.ps1"
 if errorlevel 1 (

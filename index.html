@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>인천과학대제전 · 인공지능창작교실</title>
+<title>부마 발명교육센터</title>
 <style>
   :root{
     --ui-bg: rgba(12,14,20,.55);
@@ -22,6 +22,7 @@
   #title{
     position:absolute;top:max(18px,env(safe-area-inset-top));left:50%;
     transform:translateX(-50%);text-align:center;pointer-events:none;z-index:5;
+    max-width:min(94vw,1500px);
     text-shadow:0 2px 18px rgba(0,0,0,.75), 0 0 46px rgba(0,0,0,.5);
     animation:fadeDown 1.4s ease both;
   }
@@ -136,8 +137,8 @@
   <video id="cam" playsinline muted autoplay></video>
 
   <div id="title">
-    <div class="sub">INCHEON SCIENCE FESTIVAL</div>
-    <div class="main">인천과학대제전 · 인공지능창작교실</div>
+    <div class="sub">BUMA INVENTION EDUCATION CENTER</div>
+    <div class="main">부마 발명교육센터</div>
     <div class="rule"></div>
   </div>
 
@@ -189,8 +190,8 @@
   </div>
 
   <div id="intro">
-    <div class="kicker">INCHEON SCIENCE FESTIVAL</div>
-    <h1>인천과학대제전 · 인공지능창작교실</h1>
+    <div class="kicker">BUMA INVENTION EDUCATION CENTER</div>
+    <h1>부마 발명교육센터</h1>
     <p>배경을 고르고 카메라 앞에 서 보세요.<br>
        컴퓨터가 여러분의 움직임을 알아보고, 꽃잎 같은 빛의 입자가 몸을 따라 흩날립니다.<br>
        움직임은 소리가 되고, <b>사진</b>으로 남길 수도 있습니다.</p>
@@ -205,7 +206,7 @@
 <script>
 "use strict";
 /* =========================================================================
-   인천과학대제전 · 인공지능창작교실  —  Interactive Petal Art
+   부마 발명교육센터  —  Interactive Petal Art
    웹캠 배경차분으로 사람 실루엣을 찾고, 그 실루엣을 힘의 장으로 바꾸어
    꽃잎 입자를 흩날리게 하는 단일 파일 인터랙티브 아트.
    ========================================================================= */
@@ -1024,7 +1025,7 @@ function composePhoto(){
   g.fillStyle = '#ffffff';
   g.font = '700 ' + Math.round(bar * .34) + 'px "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   g.textAlign = 'left';
-  g.fillText('인천과학대제전 · 인공지능창작교실', pad, h + bar * .5);
+  g.fillText('부마 발명교육센터', pad, h + bar * .5);
 
   const d = new Date();
   const stamp = d.getFullYear() + '.' + twoDigit(d.getMonth() + 1) + '.' + twoDigit(d.getDate());
@@ -1061,7 +1062,7 @@ function startShot(){
 function finishShot(){
   const d = new Date();
   // 파일명은 영문으로 — 브라우저가 한글 파일명을 버리고 확장자 없는 "download"로 저장하는 경우가 있다
-  shotName = 'incheon-ai-art_' + theme.id + '_'
+  shotName = 'buma-invention-art_' + theme.id + '_'
            + d.getFullYear() + twoDigit(d.getMonth()+1) + twoDigit(d.getDate()) + '-'
            + twoDigit(d.getHours()) + twoDigit(d.getMinutes()) + twoDigit(d.getSeconds()) + '.jpg';
   composePhoto().toBlob(blob => {

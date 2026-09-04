@@ -1,5 +1,5 @@
 ﻿$ErrorActionPreference = 'Stop'
-# 인천과학대제전 · 인공지능창작교실 — 설치 없이 도는 로컬 서버(인터넷 불필요)
+# 부마 발명교육센터 — 설치 없이 도는 로컬 서버(인터넷 불필요)
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 
 $listener = $null
@@ -30,7 +30,7 @@ $url = "http://localhost:$port/index.html"
 
 Write-Host ""
 Write-Host "  ============================================"
-Write-Host "   인천과학대제전 · 인공지능창작교실"
+Write-Host "   부마 발명교육센터"
 Write-Host "  ============================================"
 Write-Host ""
 Write-Host "   주소 : $url"
