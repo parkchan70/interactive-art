@@ -749,8 +749,17 @@ async function begin(useCam){
       setStatus('카메라 작동 중 · 3초간 화면을 비워 주세요');
       setTimeout(() => setStatus('카메라 작동 중'), 3200);
     } catch (err){
-      $('#introNote').textContent =
-        '카메라를 열 수 없습니다(' + (err.name || 'error') + '). https 또는 localhost에서 열어 주세요. 카메라 없이도 체험할 수 있습니다.';
+      const name = err && err.name || 'Error';
+      const guide = {
+        NotAllowedError:  '브라우저가 카메라 사용을 막았습니다. 주소창 왼쪽의 카메라(또는 자물쇠) 아이콘을 눌러 "허용"으로 바꿔 주세요.',
+        NotFoundError:    '연결된 카메라를 찾지 못했습니다. 웹캠이 꽂혀 있는지, 노트북 카메라 덮개가 열려 있는지 확인해 주세요.',
+        NotReadableError: '다른 프로그램(줌·팀즈 등)이 카메라를 쓰고 있습니다. 그 프로그램을 끄고 다시 시도해 주세요.',
+        SecurityError:    '이 브라우저는 파일을 직접 열었을 때 카메라를 막습니다.'
+      }[name] || ('카메라를 열 수 없습니다 (' + name + ').');
+      const extra = location.protocol === 'file:'
+        ? ' 폴더 안의 "실행-윈도우.bat"(맥은 "실행-맥리눅스.command")으로 열면 대부분 해결됩니다.'
+        : '';
+      $('#introNote').textContent = guide + extra + ' 카메라 없이도 체험할 수 있습니다.';
       return;
     }
   } else {
