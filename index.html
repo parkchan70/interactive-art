@@ -73,7 +73,31 @@
     border-radius:10px;transition:background .2s;font-family:inherit;}
   .btn:hover{background:rgba(255,255,255,.22);}
   .btn.on{background:rgba(255,255,255,.85);color:#111;}
+  .btn.shoot{width:100%;margin-top:9px;padding:12px 8px;font-size:13.5px;
+    background:rgba(255,255,255,.9);color:#14171f;border-color:transparent;}
+  .btn.shoot:hover{background:#fff;}
+  .btn.shoot:disabled{opacity:.45;cursor:default;}
   #hint{margin-top:12px;font-size:11px;line-height:1.65;opacity:.55;}
+
+  /* 촬영 */
+  #shotNum{position:absolute;inset:0;z-index:14;display:flex;align-items:center;justify-content:center;
+    font-size:min(34vw,300px);font-weight:800;color:#fff;pointer-events:none;opacity:0;
+    text-shadow:0 6px 60px rgba(0,0,0,.6);}
+  #shotNum.tick{animation:tick 1s ease-out;}
+  @keyframes tick{0%{opacity:0;transform:scale(1.5)}18%{opacity:.92;transform:scale(1)}100%{opacity:0;transform:scale(.86)}}
+  #flash{position:absolute;inset:0;z-index:15;background:#fff;opacity:0;pointer-events:none;}
+  #flash.go{animation:flash .5s ease-out;}
+  @keyframes flash{0%{opacity:.95}100%{opacity:0}}
+
+  #shot{position:absolute;inset:0;z-index:18;display:flex;align-items:center;justify-content:center;
+    background:rgba(6,8,13,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    transition:opacity .3s;padding:20px;}
+  #shot.off{opacity:0;pointer-events:none;}
+  .shotbox{display:flex;flex-direction:column;align-items:center;gap:16px;max-width:min(92vw,880px);}
+  #shotImg{max-width:100%;max-height:64vh;border-radius:14px;
+    box-shadow:0 26px 70px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.16);}
+  .shotrow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .shotnote{font-size:12px;opacity:.6;}
   #status{margin-top:10px;font-size:11px;opacity:.75;min-height:1.4em;}
 
   .hidden-ui #themes,.hidden-ui #panel{opacity:0;transform:translateY(20px);pointer-events:none;}
@@ -133,21 +157,43 @@
       <label><span>바람 세기</span><b id="vWind"></b></label>
       <input id="wind" type="range" min="0" max="200" value="100">
     </div>
+    <div class="row">
+      <label><span>소리 크기</span><b id="vVol"></b></label>
+      <input id="vol" type="range" min="0" max="100" value="65">
+    </div>
     <div class="btns">
       <button class="btn" id="btnReset">배경 재설정</button>
       <button class="btn on" id="btnMirror">거울</button>
-      <button class="btn" id="btnSil">실루엣</button>
+      <button class="btn on" id="btnSil">실루엣</button>
+      <button class="btn on" id="btnSound">소리</button>
+      <button class="btn" id="btnMe">내 모습</button>
       <button class="btn" id="btnFull">전체화면</button>
     </div>
+    <button class="btn shoot" id="btnShot">📷 사진 찍기</button>
     <div id="status"></div>
-    <div id="hint">단축키 · <b>1~3</b> 배경 전환 · <b>R</b> 배경 재설정 · <b>H</b> 화면 정리 · <b>F</b> 전체화면</div>
+    <div id="hint">단축키 · <b>1~4</b> 배경 · <b>Space</b> 사진 · <b>S</b> 소리 · <b>P</b> 내 모습<br><b>R</b> 배경 재설정 · <b>H</b> 화면 정리 · <b>F</b> 전체화면</div>
+  </div>
+
+  <div id="shotNum"></div>
+  <div id="flash"></div>
+
+  <div id="shot" class="off">
+    <div class="shotbox">
+      <img id="shotImg" alt="촬영한 사진">
+      <div class="shotrow">
+        <button class="cta" id="btnSave">사진 저장하기</button>
+        <button class="cta ghost" id="btnShotClose">닫기</button>
+      </div>
+      <div class="shotnote">사진은 이 컴퓨터에만 저장되며, 인터넷으로 전송되지 않습니다.</div>
+    </div>
   </div>
 
   <div id="intro">
     <div class="kicker">INCHEON SCIENCE FESTIVAL</div>
     <h1>인천과학대제전 · 인공지능창작교실</h1>
     <p>배경을 고르고 카메라 앞에 서 보세요.<br>
-       컴퓨터가 여러분의 움직임을 알아보고, 꽃잎 같은 빛의 입자가 몸을 따라 흩날립니다.</p>
+       컴퓨터가 여러분의 움직임을 알아보고, 꽃잎 같은 빛의 입자가 몸을 따라 흩날립니다.<br>
+       움직임은 소리가 되고, <b>사진</b>으로 남길 수도 있습니다.</p>
     <div class="go">
       <button class="cta" id="btnStart">카메라 켜고 시작하기</button>
       <button class="cta ghost" id="btnDemo">카메라 없이 체험</button>
@@ -184,6 +230,7 @@ const THEMES = [
     shape:'petal', blend:'source-over',
     glow:[255,236,150], glowAmt:0.42,
     gravity:16, wind:26, swirl:1.0, drag:0.986, size:[11,24], burst:150,
+    scale:[523.25, 587.33, 659.25, 783.99, 880], timbre:{ type:'sine', harm:2.01, dur:1.3 },
     paint(g, W, H){
       const r = mulberry32(7);
       let sky = g.createLinearGradient(0, 0, 0, H);
@@ -226,6 +273,7 @@ const THEMES = [
     shape:'spark', blend:'lighter',
     glow:[255,170,120], glowAmt:0.5,
     gravity:9, wind:34, swirl:1.25, drag:0.99, size:[6,15], burst:170,
+    scale:[440, 523.25, 587.33, 659.25, 783.99], timbre:{ type:'triangle', harm:1.5, dur:1.7 },
     paint(g, W, H){
       const r = mulberry32(21), hz = H*.62;
       let sky = g.createLinearGradient(0, 0, 0, hz);
@@ -285,6 +333,7 @@ const THEMES = [
     shape:'star', blend:'lighter',
     glow:[150,190,255], glowAmt:0.6,
     gravity:4, wind:30, swirl:1.7, drag:0.992, size:[5,13], burst:200,
+    scale:[587.33, 659.25, 739.99, 880, 987.77, 1174.66], timbre:{ type:'sine', harm:3.02, dur:2.2 },
     paint(g, W, H){
       const r = mulberry32(1889);
       let sky = g.createLinearGradient(0, 0, 0, H);
@@ -368,6 +417,122 @@ const THEMES = [
       }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     }
+  },
+  {
+    id:'ecocity', name:'에코과학도시',
+    colors:['#f2ffdc','#c3f08b','#7fd45a','#e6fff0'],
+    shape:'petal', blend:'source-over',
+    glow:[170,255,190], glowAmt:0.45,
+    gravity:11, wind:24, swirl:1.15, drag:0.988, size:[9,20], burst:160,
+    scale:[523.25, 587.33, 659.25, 783.99, 880, 1046.5], timbre:{ type:'triangle', harm:2, dur:.8 },
+    paint(g, W, H){
+      const r = mulberry32(2050), hz = H*.70;
+      let sky = g.createLinearGradient(0, 0, 0, hz);
+      sky.addColorStop(0,'#7fc6ef'); sky.addColorStop(.55,'#bde6f7'); sky.addColorStop(1,'#eafaf0');
+      g.fillStyle = sky; g.fillRect(0, 0, W, hz);
+      let sun = g.createRadialGradient(W*.2, H*.14, 0, W*.2, H*.14, H*.55);
+      sun.addColorStop(0,'rgba(255,255,235,.8)'); sun.addColorStop(1,'rgba(255,255,235,0)');
+      g.fillStyle = sun; g.fillRect(0, 0, W, hz);
+      // 구름
+      for (let i = 0; i < 16; i++){
+        const cx = r()*W, cy = r()*hz*.55, s = H*(.02 + r()*.045);
+        g.globalAlpha = .5 + r()*.35; g.fillStyle = '#ffffff';
+        for (let k = 0; k < 5; k++){
+          g.beginPath();
+          g.ellipse(cx + (k-2)*s*.75, cy + Math.sin(k)*s*.18, s*(.6+r()*.6), s*(.4+r()*.28), 0, 0, 6.284);
+          g.fill();
+        }
+      }
+      g.globalAlpha = 1;
+      // 먼 산
+      for (const [y, c] of [[.60,'#a8cfc0'],[.655,'#8dbfa6']]){
+        g.fillStyle = c; g.beginPath(); g.moveTo(0, hz);
+        for (let x = 0; x <= W; x += 20) g.lineTo(x, H*y + Math.sin(x*.005 + y*70)*H*.035);
+        g.lineTo(W, hz); g.closePath(); g.fill();
+      }
+      // 수직정원 빌딩
+      const towers = [];
+      for (let i = 0; i < 13; i++)
+        towers.push({ x: W*(.05 + i*.075 + r()*.02), w: W*(.028 + r()*.032), h: H*(.12 + r()*.30) });
+      towers.sort((a, b) => b.h - a.h);
+      for (const t of towers){
+        const top = hz - t.h;
+        const gl = g.createLinearGradient(t.x, top, t.x + t.w, hz);
+        gl.addColorStop(0,'rgba(236,250,255,.97)'); gl.addColorStop(.5,'rgba(196,228,240,.95)');
+        gl.addColorStop(1,'rgba(158,201,219,.95)');
+        g.fillStyle = gl; g.fillRect(t.x, top, t.w, t.h);
+        // 초록 테라스
+        const rows = Math.max(2, Math.round(t.h / (H*.055)));
+        for (let k = 1; k <= rows; k++){
+          const y = top + t.h*k/(rows + 1);
+          g.fillStyle = ['#5fae4a','#79c25c','#4d9a41'][(r()*3)|0];
+          g.fillRect(t.x - t.w*.05, y, t.w*1.1, H*.011);
+          g.globalAlpha = .5; g.fillStyle = '#2f6b2b';
+          g.fillRect(t.x - t.w*.05, y + H*.011, t.w*1.1, H*.003); g.globalAlpha = 1;
+        }
+        // 옥상 태양광
+        g.fillStyle = '#2b3f6b'; g.fillRect(t.x + t.w*.15, top - H*.008, t.w*.7, H*.008);
+        // 창문 반사
+        g.globalAlpha = .35; g.fillStyle = '#ffffff';
+        g.fillRect(t.x + t.w*.12, top, t.w*.12, t.h); g.globalAlpha = 1;
+      }
+      // 잔디
+      let grass = g.createLinearGradient(0, hz, 0, H);
+      grass.addColorStop(0,'#79bb55'); grass.addColorStop(.5,'#5da044'); grass.addColorStop(1,'#3d7a31');
+      g.fillStyle = grass; g.fillRect(0, hz, W, H - hz);
+      // 가로수
+      for (let i = 0; i < 26; i++){
+        const x = r()*W, d = r(), y = hz + (H - hz)*(.02 + d*.12), sc = H*(.018 + d*.022);
+        g.fillStyle = '#5a4a33'; g.fillRect(x - sc*.09, y - sc*.5, sc*.18, sc*.6);
+        g.fillStyle = ['#3f8a3a','#4e9c42','#357a33'][(r()*3)|0];
+        g.beginPath(); g.arc(x, y - sc*.75, sc*.5, 0, 6.284); g.fill();
+        g.beginPath(); g.arc(x - sc*.32, y - sc*.5, sc*.34, 0, 6.284); g.fill();
+        g.beginPath(); g.arc(x + sc*.32, y - sc*.52, sc*.32, 0, 6.284); g.fill();
+      }
+      // 태양광 패널 밭 (아래쪽에만, 잔디가 보이도록 띄엄띄엄)
+      for (let row = 0; row < 3; row++){
+        const y = hz + (H - hz)*(.34 + row*.24), ph = (H - hz)*.10*(1 + row*.5);
+        for (let x = -W*.05 + (row%2)*W*.05; x < W*1.05; x += W*(.13 + row*.035)){
+          const pw = W*(.07 + row*.02);
+          g.fillStyle = '#22345e';
+          g.beginPath();
+          g.moveTo(x, y + ph); g.lineTo(x + pw*.22, y); g.lineTo(x + pw, y); g.lineTo(x + pw*.78, y + ph);
+          g.closePath(); g.fill();
+          g.globalAlpha = .3; g.fillStyle = '#9fd8ff';
+          g.beginPath();
+          g.moveTo(x + pw*.05, y + ph*.9); g.lineTo(x + pw*.26, y + ph*.1); g.lineTo(x + pw*.42, y + ph*.1);
+          g.lineTo(x + pw*.2, y + ph*.9); g.closePath(); g.fill(); g.globalAlpha = 1;
+        }
+      }
+      // 풍력 발전기 (기둥만 — 날개는 over에서 회전)
+      this._turbines = [{x:W*.14, y:hz - H*.30, s:H*.115},
+                        {x:W*.42, y:hz - H*.24, s:H*.092},
+                        {x:W*.78, y:hz - H*.33, s:H*.128}];
+      for (const t of this._turbines){
+        g.fillStyle = '#f2f7fa';
+        g.beginPath();
+        g.moveTo(t.x - t.s*.045, hz); g.lineTo(t.x - t.s*.016, t.y);
+        g.lineTo(t.x + t.s*.016, t.y); g.lineTo(t.x + t.s*.045, hz);
+        g.closePath(); g.fill();
+      }
+    },
+    over(g, W, H, t){
+      for (const [i, tb] of (this._turbines || []).entries()){
+        g.save(); g.translate(tb.x, tb.y);
+        g.rotate(t * (.00042 + i*.00009));
+        g.fillStyle = '#ffffff'; g.strokeStyle = 'rgba(90,120,140,.35)'; g.lineWidth = 1;
+        for (let k = 0; k < 3; k++){
+          g.rotate(2.0944);
+          g.beginPath();
+          g.moveTo(0, -tb.s*.05); g.quadraticCurveTo(tb.s*.55, -tb.s*.12, tb.s, -tb.s*.012);
+          g.lineTo(tb.s, tb.s*.012); g.quadraticCurveTo(tb.s*.5, tb.s*.05, 0, tb.s*.05);
+          g.closePath(); g.fill(); g.stroke();
+        }
+        g.restore();
+        g.fillStyle = '#e8eef2';
+        g.beginPath(); g.arc(tb.x, tb.y, tb.s*.055, 0, 6.284); g.fill();
+      }
+    }
   }
 ];
 
@@ -403,6 +568,79 @@ function makeSprite(color, shape){
   return c;
 }
 
+/* ---------- 소리: 움직임을 소리로 바꾸기 ----------
+   바람 소리(잡음 필터)는 움직임의 "양"에, 종소리는 꽃잎이 터지는 "순간"에 대응한다.
+   음계와 음색은 배경마다 다르게 설정되어 있다. */
+const Sound = {
+  ctx: null, master: null, windGain: null, windFilter: null,
+  on: true, vol: .65, lastPing: 0,
+
+  init(){
+    if (this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC){ this.on = false; return; }
+    const c = this.ctx = new AC();
+    const comp = c.createDynamicsCompressor();       // 여러 소리가 겹쳐도 찢어지지 않게
+    comp.threshold.value = -16; comp.ratio.value = 6;
+    this.master = c.createGain();
+    this.master.gain.value = this.on ? this.vol : 0;
+    this.master.connect(comp); comp.connect(c.destination);
+
+    const len = Math.floor(c.sampleRate * 2);
+    const buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * .5;
+    const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 500; f.Q.value = .9;
+    const g = c.createGain(); g.gain.value = 0;
+    src.connect(f); f.connect(g); g.connect(this.master); src.start();
+    this.windGain = g; this.windFilter = f;
+  },
+  resume(){ if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  setOn(v){
+    this.on = v;
+    if (this.ctx) this.master.gain.setTargetAtTime(v ? this.vol : 0, this.ctx.currentTime, .06);
+  },
+  setVol(v){
+    this.vol = v;
+    if (this.ctx && this.on) this.master.gain.setTargetAtTime(v, this.ctx.currentTime, .06);
+  },
+  update(e){
+    if (!this.ctx || !this.on) return;
+    const t = this.ctx.currentTime;
+    this.windGain.gain.setTargetAtTime(Math.min(e * .55, .3), t, .14);
+    this.windFilter.frequency.setTargetAtTime(300 + e * 1600, t, .18);
+  },
+  ping(pan, strength){
+    if (!this.ctx || !this.on) return;
+    const now = performance.now();
+    if (now - this.lastPing < 85) return;              // 너무 자주 울리지 않게
+    this.lastPing = now;
+    const c = this.ctx, t = c.currentTime;
+    const sc = theme.scale, tb = theme.timbre;
+    const base = sc[(Math.random() * sc.length) | 0] * (Math.random() < .25 ? 2 : 1);
+    const dur = tb.dur * rnd(.75, 1.3);
+
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(.3 * clamp(strength, .2, 1), t + .006);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+
+    const o1 = c.createOscillator(); o1.type = tb.type; o1.frequency.value = base;
+    const o2 = c.createOscillator(); o2.type = 'sine';  o2.frequency.value = base * tb.harm;
+    const g2 = c.createGain(); g2.gain.value = .3;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+
+    let out = this.master;
+    if (c.createStereoPanner){
+      const sp = c.createStereoPanner(); sp.pan.value = clamp(pan, -1, 1);
+      g.connect(sp); sp.connect(this.master); out = null;
+    }
+    if (out) g.connect(out);
+    o1.start(t); o2.start(t);
+    o1.stop(t + dur + .06); o2.stop(t + dur + .06);
+  }
+};
+
 /* ---------- 상태 ---------- */
 const bgCv = document.getElementById('bg'), bgCtx = bgCv.getContext('2d');
 const fxCv = document.getElementById('fx'), fxCtx = fxCv.getContext('2d');
@@ -420,9 +658,16 @@ let calibrate = 0;                       // 남은 배경 학습 프레임 수
 
 const glowCv = document.createElement('canvas'), glowCtx = glowCv.getContext('2d');
 
+// 사람만 오려내는 레이어(사진 합성 · "내 모습" 표시에 사용)
+const personCv = document.createElement('canvas'), personCtx = personCv.getContext('2d');
+const maskCv = document.createElement('canvas'), maskCtx = maskCv.getContext('2d');
+let personReady = false;
+
 let particles = [];
 let camOn = false, mirror = true, showSil = true, uiHidden = false;
+let showMe = false, shooting = false;
 let sens = 24, wantCount = 1100, windScale = 1;
+let energy = 0;                          // 화면 전체 움직임의 양 (0~1) → 소리로 변환
 let pointer = null;                      // 카메라 없을 때 마우스/터치 상호작용
 
 /* ---------- 크기 조정 ---------- */
@@ -441,6 +686,9 @@ function resize(){
   GW = AW >> 1; GH = AH >> 1;
   aCv.width = AW; aCv.height = AH;
   glowCv.width = GW; glowCv.height = GH;
+  maskCv.width = GW; maskCv.height = GH;
+  personCv.width = Math.round(W * .55); personCv.height = Math.round(H * .55);
+  personReady = false;
   bgModel = new Float32Array(AW * AH);
   prevLum = new Float32Array(AW * AH);
   field    = new Float32Array(GW * GH);
@@ -450,6 +698,19 @@ function resize(){
 
   paintBackground();
   buildParticles();
+  fitTitle();
+}
+
+/* 상단 글자가 어떤 화면 폭에서도 한 줄에 들어가도록 크기를 줄여 맞춘다 */
+function fitTitle(){
+  const el = document.querySelector('#title .main');
+  if (!el) return;
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  const avail = Math.min(W - 28, 1500);
+  for (let i = 0; i < 60 && el.scrollWidth > avail && size > 9; i++){
+    size -= 1; el.style.fontSize = size + 'px';
+  }
 }
 
 function paintBackground(){
@@ -556,6 +817,47 @@ function blur(buf, passes){
   }
 }
 
+/* 실루엣 마스크로 카메라 영상에서 사람만 오려낸다 (사진 합성·"내 모습" 표시용) */
+function updatePersonLayer(){
+  personReady = false;
+  if (!camOn || video.readyState < 2 || !video.videoWidth) return;
+  const w = personCv.width, h = personCv.height;
+
+  // 1) 화면과 같은 비율로 잘라 그리기
+  const vw = video.videoWidth, vh = video.videoHeight, ar = w / h;
+  let sw = vw, sh = vw / ar;
+  if (sh > vh){ sh = vh; sw = vh * ar; }
+  personCtx.setTransform(1, 0, 0, 1, 0, 0);
+  personCtx.globalCompositeOperation = 'source-over';
+  personCtx.clearRect(0, 0, w, h);
+  personCtx.save();
+  if (mirror){ personCtx.translate(w, 0); personCtx.scale(-1, 1); }
+  personCtx.drawImage(video, (vw - sw)/2, (vh - sh)/2, sw, sh, 0, 0, w, h);
+  personCtx.restore();
+
+  // 2) 실루엣을 알파 마스크로 만들어 오려내기
+  const img = maskCtx.createImageData(GW, GH), px = img.data;
+  let sum = 0;
+  for (let i = 0; i < field.length; i++){
+    const v = clamp((field[i] - .12) * 2.6, 0, 1);
+    sum += v;
+    const o = i << 2;
+    px[o] = px[o+1] = px[o+2] = 255;
+    px[o+3] = (Math.pow(v, .8) * 255) | 0;
+  }
+  if (sum < field.length * .004){            // 사람이 거의 없으면 비워 둔다
+    personCtx.clearRect(0, 0, w, h); return;
+  }
+  maskCtx.putImageData(img, 0, 0);
+  personCtx.globalCompositeOperation = 'destination-in';
+  personCtx.imageSmoothingEnabled = true; personCtx.imageSmoothingQuality = 'high';
+  personCtx.filter = 'blur(' + (w / GW * .7).toFixed(1) + 'px)';
+  personCtx.drawImage(maskCv, 0, 0, w, h);
+  personCtx.filter = 'none';
+  personCtx.globalCompositeOperation = 'source-over';
+  personReady = true;
+}
+
 /* 카메라가 없을 때: 포인터 위치를 사람 실루엣처럼 취급 */
 function pointerField(){
   field.fill(0); motion.fill(0);
@@ -578,22 +880,37 @@ function frame(now){
 
   camOn ? analyze() : pointerField();
 
+  /* 움직임의 양을 모아 소리로 보낸다 */
+  let mSum = 0;
+  for (let i = 0; i < motion.length; i++) mSum += motion[i];
+  energy += (clamp(mSum / motion.length * 9, 0, 1) - energy) * .12;
+  Sound.update(energy);
+
+  if (showMe || shooting) updatePersonLayer();
+
   /* 배경 */
   bgCtx.setTransform(1, 0, 0, 1, 0, 0);
   bgCtx.drawImage(bgStatic, 0, 0);
   bgCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
   theme.over(bgCtx, W, H, now);
 
-  /* 실루엣 빛 */
+  /* 사람(선택) → 실루엣 빛 → 입자 순서로 겹친다 */
   fxCtx.clearRect(0, 0, W, H);
+  if (showMe && personReady){
+    fxCtx.save(); fxCtx.globalAlpha = .92;
+    fxCtx.imageSmoothingEnabled = true; fxCtx.imageSmoothingQuality = 'high';
+    fxCtx.drawImage(personCv, 0, 0, W, H);
+    fxCtx.restore();
+  }
   if (showSil){
+    const glowScale = (showMe && personReady) ? .4 : 1;
     const img = glowCtx.createImageData(GW, GH), px = img.data;
     const [gr, gg, gb] = theme.glow;
     for (let i = 0; i < field.length; i++){
       const v = clamp(field[i] * 1.35, 0, 1);
       const o = i << 2;
       px[o] = gr; px[o+1] = gg; px[o+2] = gb;
-      px[o+3] = (v * v * 235 * theme.glowAmt) | 0;
+      px[o+3] = (v * v * 235 * theme.glowAmt * glowScale) | 0;
     }
     glowCtx.putImageData(img, 0, 0);
     fxCtx.save();
@@ -674,12 +991,97 @@ function emitBursts(){
     p.y = ((i / GW | 0) + Math.random()) / GH * H;
     const a = rnd(0, 6.283), sp = rnd(60, 260) * theme.burst / 150;
     p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp - 40;
+    if (made === 0) Sound.ping((p.x / W) * 2 - 1, motion[i]);
     made++;
   }
 }
 
 /* ---------- UI ---------- */
 const $ = s => document.querySelector(s);
+
+/* ---------- 사진 남기기 ---------- */
+let shotURL = null, shotName = '';
+
+function twoDigit(n){ return (n < 10 ? '0' : '') + n; }
+
+function composePhoto(){
+  const w = Math.min(1800, Math.max(960, Math.round(W * DPR)));
+  const h = Math.round(w * H / W);
+  const bar = Math.round(h * .085);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h + bar;
+  const g = c.getContext('2d');
+
+  // 화면에 보이는 그대로 (배경 + 사람/실루엣 + 입자)
+  g.drawImage(bgCv, 0, 0, w, h);
+  g.drawImage(fxCv, 0, 0, w, h);
+
+  // 아래쪽 이름표
+  g.fillStyle = '#12151d'; g.fillRect(0, h, w, bar);
+  g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0, h, w, 2);
+  const pad = bar * .55;
+  g.textBaseline = 'middle';
+  g.fillStyle = '#ffffff';
+  g.font = '700 ' + Math.round(bar * .34) + 'px "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  g.textAlign = 'left';
+  g.fillText('인천과학대제전 · 인공지능창작교실', pad, h + bar * .5);
+
+  const d = new Date();
+  const stamp = d.getFullYear() + '.' + twoDigit(d.getMonth() + 1) + '.' + twoDigit(d.getDate());
+  g.globalAlpha = .68;
+  g.font = '500 ' + Math.round(bar * .26) + 'px "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  g.textAlign = 'right';
+  g.fillText(theme.name + ' · ' + stamp, w - pad, h + bar * .5);
+  g.globalAlpha = 1;
+  return c;
+}
+
+function startShot(){
+  if (shooting || !$('#intro').classList.contains('gone')) return;
+  shooting = true;
+  $('#btnShot').disabled = true;
+  const num = $('#shotNum');
+  let n = 3;
+  const step = () => {
+    if (n > 0){
+      num.textContent = n;
+      num.classList.remove('tick'); void num.offsetWidth; num.classList.add('tick');
+      n--; setTimeout(step, 900);
+    } else {
+      num.classList.remove('tick'); num.textContent = '';
+      const fl = $('#flash');
+      fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+      // 다음 프레임이 그려진 뒤에 캔버스를 읽는다
+      requestAnimationFrame(() => requestAnimationFrame(finishShot));
+    }
+  };
+  step();
+}
+
+function finishShot(){
+  const d = new Date();
+  // 파일명은 영문으로 — 브라우저가 한글 파일명을 버리고 확장자 없는 "download"로 저장하는 경우가 있다
+  shotName = 'incheon-ai-art_' + theme.id + '_'
+           + d.getFullYear() + twoDigit(d.getMonth()+1) + twoDigit(d.getDate()) + '-'
+           + twoDigit(d.getHours()) + twoDigit(d.getMinutes()) + twoDigit(d.getSeconds()) + '.jpg';
+  composePhoto().toBlob(blob => {
+    if (shotURL) URL.revokeObjectURL(shotURL);
+    shotURL = URL.createObjectURL(blob);
+    $('#shotImg').src = shotURL;
+    $('#shot').classList.remove('off');
+    shooting = false;
+    $('#btnShot').disabled = false;
+  }, 'image/jpeg', .92);
+}
+
+function saveShot(){
+  if (!shotURL) return;
+  const a = document.createElement('a');
+  a.href = shotURL; a.download = shotName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setStatus('사진을 저장했습니다 · 다운로드 폴더를 확인하세요');
+  setTimeout(() => setStatus(camOn ? '카메라 작동 중' : '체험 모드'), 3000);
+}
 
 function buildThemeCards(){
   const box = $('#themes');
@@ -716,6 +1118,15 @@ $('#btnReset').onclick  = () => { calibrate = 45; setStatus('배경을 다시 �
 $('#btnMirror').onclick = e => { mirror = !mirror; e.target.classList.toggle('on', mirror); calibrate = 30; };
 $('#btnSil').onclick    = e => { showSil = !showSil; e.target.classList.toggle('on', showSil); };
 $('#btnFull').onclick   = toggleFull;
+$('#vol').oninput = e => {
+  Sound.setVol(+e.target.value / 100);
+  $('#vVol').textContent = e.target.value + '%';
+};
+$('#btnSound').onclick = e => { Sound.init(); Sound.resume(); Sound.setOn(!Sound.on); e.target.classList.toggle('on', Sound.on); };
+$('#btnMe').onclick    = e => { showMe = !showMe; e.target.classList.toggle('on', showMe); };
+$('#btnShot').onclick  = startShot;
+$('#btnSave').onclick  = saveShot;
+$('#btnShotClose').onclick = () => $('#shot').classList.add('off');
 function toggleFull(){
   document.fullscreenElement ? document.exitFullscreen()
                              : document.documentElement.requestFullscreen?.().catch(() => {});
@@ -724,9 +1135,13 @@ $('#btnSil').classList.toggle('on', showSil);
 
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
+  if (k === ' ' || e.code === 'Space'){ e.preventDefault(); startShot(); return; }
+  if (k === 'escape'){ $('#shot').classList.add('off'); return; }
   if (k >= '1' && k <= String(THEMES.length)) selectTheme(+k - 1);
   else if (k === 'r') $('#btnReset').click();
   else if (k === 'f') toggleFull();
+  else if (k === 's') $('#btnSound').click();
+  else if (k === 'p') $('#btnMe').click();
   else if (k === 'h'){ uiHidden = !uiHidden; document.body.classList.toggle('hidden-ui', uiHidden); }
 });
 
@@ -742,10 +1157,13 @@ addEventListener('pointerleave', () => { if (!camOn) pointer = null; });
 
 /* ---------- 시작 ---------- */
 async function begin(useCam){
+  Sound.init(); Sound.resume();            // 소리는 사용자가 버튼을 누른 뒤에만 시작할 수 있다
   $('#introNote').textContent = useCam ? '카메라를 여는 중…' : '';
   if (useCam){
     try {
       await startCamera();
+      showMe = true;                       // 관람객이 배경 속에 들어가 보이도록
+      $('#btnMe').classList.add('on');
       setStatus('카메라 작동 중 · 3초간 화면을 비워 주세요');
       setTimeout(() => setStatus('카메라 작동 중'), 3200);
     } catch (err){
@@ -763,6 +1181,7 @@ async function begin(useCam){
       return;
     }
   } else {
+    $('#btnMe').disabled = true;           // 카메라가 없으면 합성할 사람이 없다
     setStatus('체험 모드 · 마우스를 움직여 보세요');
   }
   $('#intro').classList.add('gone');
@@ -776,8 +1195,10 @@ addEventListener('resize', () => { clearTimeout(window.__rz); window.__rz = setT
 $('#vSens').textContent  = sens;
 $('#vCount').textContent = wantCount;
 $('#vWind').textContent  = '100%';
+$('#vVol').textContent   = '65%';
 buildThemeCards();
 resize();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 requestAnimationFrame(frame);
 </script>
 </body>
