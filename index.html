@@ -63,7 +63,13 @@
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     transition:opacity .35s, transform .35s;
   }
-  #panel h2{margin:0 0 12px;font-size:12px;letter-spacing:.2em;opacity:.65;font-weight:600;}
+  #panel h2{margin:0;font-size:12px;letter-spacing:.2em;opacity:.65;font-weight:600;}
+  .phead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .ptoggle{flex:0 0 auto;width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;line-height:1;cursor:pointer;color:#fff;font-family:inherit;
+    background:rgba(255,255,255,.1);border:1px solid var(--ui-line);
+    border-radius:9px;transition:background .2s;}
+  .ptoggle:hover{background:rgba(255,255,255,.24);}
   .row{margin-bottom:13px;}
   .row label{display:flex;justify-content:space-between;font-size:12px;opacity:.85;margin-bottom:6px;}
   .row input[type=range]{width:100%;accent-color:#fff;}
@@ -78,6 +84,14 @@
   .btn.shoot:hover{background:#fff;}
   .btn.shoot:disabled{opacity:.45;cursor:default;}
   #hint{margin-top:12px;font-size:11px;line-height:1.65;opacity:.55;}
+
+  /* 접은 상태 — 사진 찍기 버튼과 설정 여는 버튼만 남는다 */
+  #panel.mini{display:flex;flex-direction:row-reverse;align-items:center;gap:9px;
+    width:auto;padding:10px;}
+  #panel.mini h2,#panel.mini .row,#panel.mini .btns,
+  #panel.mini #status,#panel.mini #hint{display:none;}
+  #panel.mini .phead{margin:0;}
+  #panel.mini .btn.shoot{width:auto;margin:0;padding:12px 18px;white-space:nowrap;}
 
   /* 촬영 */
   #shotNum{position:absolute;inset:0;z-index:14;display:flex;align-items:center;justify-content:center;
@@ -144,7 +158,10 @@
   <div id="themes"></div>
 
   <div id="panel">
-    <h2>CONTROL</h2>
+    <div class="phead">
+      <h2>CONTROL</h2>
+      <button class="ptoggle" id="btnMini" title="설정 접기 (M)" aria-label="설정 접기">⌄</button>
+    </div>
     <div class="row">
       <label><span>사람 인식 감도</span><b id="vSens"></b></label>
       <input id="sens" type="range" min="8" max="60" value="24">
@@ -171,7 +188,7 @@
     </div>
     <button class="btn shoot" id="btnShot">📷 사진 찍기</button>
     <div id="status"></div>
-    <div id="hint">단축키 · <b>1~4</b> 배경 · <b>Space</b> 사진 · <b>S</b> 소리 · <b>P</b> 내 모습<br><b>R</b> 배경 재설정 · <b>H</b> 화면 정리 · <b>F</b> 전체화면</div>
+    <div id="hint">단축키 · <b>1~4</b> 배경 · <b>Space</b> 사진 · <b>S</b> 소리 · <b>P</b> 내 모습<br><b>R</b> 배경 재설정 · <b>M</b> 설정 접기 · <b>H</b> 화면 정리 · <b>F</b> 전체화면</div>
   </div>
 
   <div id="shotNum"></div>
@@ -665,6 +682,7 @@ let personReady = false;
 
 let particles = [];
 let camOn = false, mirror = true, showSil = true, uiHidden = false;
+let panelMini = false, started = false;  // 설정 패널 접힘 상태 / 체험 시작 여부
 let showMe = false, shooting = false;
 let sens = 24, wantCount = 1100, windScale = 1;
 let energy = 0;                          // 화면 전체 움직임의 양 (0~1) → 소리로 변환
@@ -1111,6 +1129,29 @@ function selectTheme(idx){
 
 function setStatus(msg){ $('#status').textContent = msg; }
 
+/* ---------- 설정 패널 접기 ----------
+   세팅을 마치고 잠시 두면 패널이 스스로 접혀 "사진 찍기" 버튼만 남는다.
+   체험 중에 설정 상자가 화면을 가리지 않도록 하기 위한 것. */
+const MINI_IDLE = 15000;                 // 패널을 건드리지 않고 이만큼 지나면 접는다(ms)
+let miniTimer = 0;
+function setMini(on){
+  panelMini = on;
+  $('#panel').classList.toggle('mini', on);
+  const b = $('#btnMini');
+  b.textContent = on ? '⚙' : '⌄';
+  b.title = on ? '설정 열기 (M)' : '설정 접기 (M)';
+  b.setAttribute('aria-label', b.title);
+  clearTimeout(miniTimer);
+  if (!on) armMini();
+}
+function armMini(){                      // 패널을 만질 때마다 자동 접기 시계를 다시 맞춘다
+  clearTimeout(miniTimer);
+  if (panelMini || !started) return;
+  miniTimer = setTimeout(() => setMini(true), MINI_IDLE);
+}
+$('#btnMini').onclick = () => setMini(!panelMini);
+for (const ev of ['pointerdown', 'input', 'focusin']) $('#panel').addEventListener(ev, armMini);
+
 $('#sens').oninput  = e => { sens = +e.target.value; $('#vSens').textContent = sens; };
 $('#count').oninput = e => { wantCount = +e.target.value; $('#vCount').textContent = wantCount; buildParticles(); };
 $('#wind').oninput  = e => { windScale = +e.target.value / 100; $('#vWind').textContent = e.target.value + '%'; };
@@ -1142,6 +1183,7 @@ addEventListener('keydown', e => {
   else if (k === 'f') toggleFull();
   else if (k === 's') $('#btnSound').click();
   else if (k === 'p') $('#btnMe').click();
+  else if (k === 'm') setMini(!panelMini);
   else if (k === 'h'){ uiHidden = !uiHidden; document.body.classList.toggle('hidden-ui', uiHidden); }
 });
 
@@ -1185,6 +1227,8 @@ async function begin(useCam){
     setStatus('체험 모드 · 마우스를 움직여 보세요');
   }
   $('#intro').classList.add('gone');
+  started = true;
+  armMini();
 }
 $('#btnStart').onclick = () => begin(true);
 $('#btnDemo').onclick  = () => begin(false);
